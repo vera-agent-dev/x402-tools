@@ -1,0 +1,19 @@
+{
+  "name": "x402-tools",
+  "description": "Buyer-side MCP tools that pay per call over the x402 protocol: package install-safety checks and GitHub PR-merge likelihood lookups.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Jose Coca"
+  },
+  "homepage": "https://github.com/JoseCOCA/x402-tools",
+  "license": "MIT",
+  "mcpServers": {
+    "x402-tools": {
+      "command": "npx",
+      "args": ["-y", "github:JoseCOCA/x402-tools"],
+      "env": {
+        "X402_BASE_URL": "https://x402-api.fly.dev"
+      }
+    }
+  }
+}

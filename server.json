@@ -1,0 +1,52 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.JoseCOCA/x402-tools",
+  "description": "Buyer-side MCP tools that pay per call over the x402 protocol: package install-safety checks and GitHub PR-merge likelihood lookups.",
+  "title": "x402 Tools",
+  "websiteUrl": "https://github.com/JoseCOCA/x402-tools",
+  "repository": {
+    "url": "https://github.com/JoseCOCA/x402-tools",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "x402-tools",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "X402_BASE_URL",
+          "description": "Base URL of the x402 seller API to call.",
+          "isRequired": false,
+          "isSecret": false,
+          "default": "https://x402-api.fly.dev"
+        },
+        {
+          "name": "X402_BUYER_PRIVATE_KEY",
+          "description": "Private key of a dedicated, low-balance EVM wallet used to auto-pay x402 challenges. Omit to run in challenge-only mode.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "X402_NETWORK",
+          "description": "CAIP-2 network id. Defaults to eip155:8453 (Base). Use eip155:84532 for Base Sepolia testnet.",
+          "isRequired": false,
+          "isSecret": false,
+          "default": "eip155:8453"
+        },
+        {
+          "name": "X402_MAX_PRICE_USD",
+          "description": "Spending guard: refuses to auto-pay any single challenge above this USD amount.",
+          "isRequired": false,
+          "isSecret": false,
+          "default": "0.10"
+        }
+      ]
+    }
+  ]
+}
