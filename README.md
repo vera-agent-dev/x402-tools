@@ -44,7 +44,7 @@ input among several.
       "command": "npx",
       "args": ["-y", "github:vera-agent-dev/x402-tools"],
       "env": {
-        "X402_BASE_URL": "https://x402-api.fly.dev"
+        "X402_BASE_URL": "https://x402-api-24223879872.us-east1.run.app"
       }
     }
   }
@@ -68,7 +68,7 @@ npm run build
     "x402-tools": {
       "command": "node",
       "args": ["/absolute/path/to/x402-tools/dist/index.js"],
-      "env": { "X402_BASE_URL": "https://x402-api.fly.dev" }
+      "env": { "X402_BASE_URL": "https://x402-api-24223879872.us-east1.run.app" }
     }
   }
 }
@@ -114,7 +114,7 @@ untracked client config instead of editing this file in place.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `X402_BASE_URL` | `https://x402-api.fly.dev` (TODO: confirm once deployed) | Base URL of the seller API. |
+| `X402_BASE_URL` | `https://x402-api-24223879872.us-east1.run.app` | Base URL of the seller API. |
 | `X402_BUYER_PRIVATE_KEY` | _(unset)_ | Private key of the paying wallet. Omit to run in challenge-only mode. |
 | `X402_NETWORK` | `eip155:8453` (Base) | CAIP-2 network id. Use `eip155:84532` for Base Sepolia testnet. |
 | `X402_MAX_PRICE_USD` | `0.10` | Spending guard: max USD per single paid call. |
@@ -148,8 +148,7 @@ npm run smoke      # end-to-end stdio smoke test against a running seller API
 
 ## Open TODOs
 
-- `X402_BASE_URL` default (`https://x402-api.fly.dev`) is a placeholder
-  until the seller API is actually deployed.
+- The seller API currently runs on Base Sepolia (testnet USDC); mainnet switch pending.
 - Not yet published to npm; install via `npx github:vera-agent-dev/x402-tools`
   until then.
 
