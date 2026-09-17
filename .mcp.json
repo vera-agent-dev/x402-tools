@@ -5,7 +5,7 @@
       "args": ["-y", "github:vera-agent-dev/x402-tools"],
       "env": {
         "X402_BASE_URL": "https://x402-api.fly.dev",
-        "X402_BUYER_PRIVATE_KEY": "",
+        "X402_BUYER_PRIVATE_KEY": "${X402_BUYER_PRIVATE_KEY}",
         "X402_MAX_PRICE_USD": "0.10"
       }
     }

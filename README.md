@@ -83,6 +83,13 @@ Claude Code plugin pointing at this GitHub repository.
 Any MCP-compatible client can use the `.mcp.json` in this repo directly, or
 copy its `mcpServers.x402-tools` block into your own client config.
 
+`.mcp.json` is a tracked file. Its `X402_BUYER_PRIVATE_KEY` value is the
+literal string `${X402_BUYER_PRIVATE_KEY}` — an env-var reference, not a
+real key — for clients that support that substitution. **Never replace it
+with an actual private key and commit that.** If your client doesn't
+support `${VAR}` substitution in MCP config, set the env var in your own
+untracked client config instead of editing this file in place.
+
 ## Payment flow
 
 1. `list_products` is always free and always live — no wallet needed.
@@ -96,7 +103,11 @@ copy its `mcpServers.x402-tools` block into your own client config.
    result plus a `payment` block (amount, network, transaction hash).
 4. A spending guard, `X402_MAX_PRICE_USD` (default `0.10`), refuses to pay
    any single challenge above that amount and returns the challenge instead
-   — the same as running with no key configured.
+   — the same as running with no key configured. This is enforced twice: a
+   local pre-check on the accept matching your configured network, and
+   (authoritatively) via the x402 client's own `setSpendControls`, which
+   caps whatever accept it actually selects and signs — so a seller
+   offering several `accepts` across networks/assets can't bypass the cap.
 
 ### Environment variables
 
