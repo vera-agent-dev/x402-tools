@@ -137,7 +137,7 @@ describe("callPaidTool", () => {
       deps,
     );
 
-    expect(deps.createPaidFetch).toHaveBeenCalledWith("0xkey", "eip155:84532");
+    expect(deps.createPaidFetch).toHaveBeenCalledWith("0xkey", "eip155:84532", 0.1);
     expect(fetchProduct).toHaveBeenCalledTimes(2);
     expect(fetchProduct).toHaveBeenLastCalledWith(
       "https://api.example.com",
@@ -176,5 +176,170 @@ describe("callPaidTool", () => {
     );
 
     expect(result.isError).toBe(true);
+  });
+
+  it("selects the accept matching config.network for the pre-check, not accepts[0]", async () => {
+    const multiAcceptHeader = encode({
+      x402Version: 2,
+      accepts: [
+        {
+          scheme: "exact",
+          network: "eip155:84532",
+          amount: "1000", // cheap testnet accept, listed first
+          asset: "0xTestnetUSDC",
+          payTo: "0xSeller",
+        },
+        {
+          scheme: "exact",
+          network: "eip155:8453",
+          amount: "900000", // expensive mainnet accept — this is the buyer's network
+          asset: "0xMainnetUSDC",
+          payTo: "0xSeller",
+        },
+      ],
+    });
+    const fetchProduct = vi.fn().mockResolvedValue(
+      new Response("{}", { status: 402, headers: { "payment-required": multiAcceptHeader } }),
+    );
+    const deps: PaidToolDeps = {
+      fetchProduct,
+      createPaidFetch: vi.fn(),
+      decodeSettlement: vi.fn(),
+    };
+
+    const result = await callPaidTool(
+      entry,
+      { ecosystem: "npm", name: "left-pad" },
+      {
+        baseUrl: "https://api.example.com",
+        buyerPrivateKey: "0xkey",
+        network: "eip155:8453",
+        maxPriceUsd: 0.1,
+      },
+      deps,
+    );
+
+    // Pre-check must see the $0.90 mainnet accept (the one that would
+    // actually be signed for this buyer), not the $0.001 testnet accept
+    // that happens to be listed first, and refuse it.
+    expect(result.content[0].text).toContain("exceeds");
+    expect(result.content[0].text).toContain("eip155:8453");
+    expect(deps.createPaidFetch).not.toHaveBeenCalled();
+  });
+
+  it("refuses and returns the challenge when the real payment client's spend controls reject the payload (belt-and-suspenders past the local pre-check)", async () => {
+    const fetchProduct = vi.fn().mockResolvedValue(
+      new Response("{}", { status: 402, headers: { "payment-required": challengeHeader } }),
+    );
+    const paidFetchImpl = vi.fn();
+    const deps: PaidToolDeps = {
+      fetchProduct,
+      createPaidFetch: vi.fn().mockReturnValue(paidFetchImpl),
+      decodeSettlement: vi.fn(),
+    };
+    // Simulate fetchProduct(..., paidFetchImpl) throwing, as the real
+    // wrapFetchWithPayment does when x402Client.setSpendControls rejects
+    // every candidate accept.
+    fetchProduct.mockImplementationOnce(async () =>
+      new Response("{}", { status: 402, headers: { "payment-required": challengeHeader } }),
+    );
+    fetchProduct.mockImplementationOnce(async () => {
+      throw new Error(
+        "Failed to create payment payload: All payment requirements were rejected by spendControls.maxAmountPerPayment ($0.1)",
+      );
+    });
+
+    const result = await callPaidTool(
+      entry,
+      { ecosystem: "npm", name: "left-pad" },
+      {
+        baseUrl: "https://api.example.com",
+        buyerPrivateKey: "0xkey",
+        network: "eip155:84532",
+        maxPriceUsd: 0.1,
+      },
+      deps,
+    );
+
+    expect(result.isError).toBeFalsy();
+    expect(result.content[0].text).toContain("spendControls");
+  });
+
+  it("never throws after a successful payment: returns raw_body and partial payment info when the paid response body fails to parse", async () => {
+    const unpaidResponse = new Response("{}", {
+      status: 402,
+      headers: { "payment-required": challengeHeader },
+    });
+    const paidResponse = new Response("not json {{{", {
+      status: 200,
+      headers: { "payment-response": "encoded-settlement" },
+    });
+    const fetchProduct = vi
+      .fn()
+      .mockResolvedValueOnce(unpaidResponse)
+      .mockResolvedValueOnce(paidResponse);
+    const deps: PaidToolDeps = {
+      fetchProduct,
+      createPaidFetch: vi.fn().mockReturnValue(vi.fn()),
+      decodeSettlement: vi.fn().mockReturnValue({
+        success: true,
+        transaction: "0xdeadbeef",
+        network: "eip155:84532",
+        payer: "0xBuyer",
+      }),
+    };
+
+    const result = await callPaidTool(
+      entry,
+      { ecosystem: "npm", name: "left-pad" },
+      {
+        baseUrl: "https://api.example.com",
+        buyerPrivateKey: "0xkey",
+        network: "eip155:84532",
+        maxPriceUsd: 0.1,
+      },
+      deps,
+    );
+
+    expect(result.isError).toBeFalsy();
+    expect(result.content[0].text).toContain("not json");
+    expect(result.content[0].text).toContain("Do not retry");
+  });
+
+  it("never throws after a successful payment: returns raw_body when decodeSettlement itself throws", async () => {
+    const unpaidResponse = new Response("{}", {
+      status: 402,
+      headers: { "payment-required": challengeHeader },
+    });
+    const paidResponse = new Response(JSON.stringify({ score: 90 }), {
+      status: 200,
+      headers: { "payment-response": "garbage" },
+    });
+    const fetchProduct = vi
+      .fn()
+      .mockResolvedValueOnce(unpaidResponse)
+      .mockResolvedValueOnce(paidResponse);
+    const deps: PaidToolDeps = {
+      fetchProduct,
+      createPaidFetch: vi.fn().mockReturnValue(vi.fn()),
+      decodeSettlement: vi.fn().mockImplementation(() => {
+        throw new Error("Invalid payment response header");
+      }),
+    };
+
+    const result = await callPaidTool(
+      entry,
+      { ecosystem: "npm", name: "left-pad" },
+      {
+        baseUrl: "https://api.example.com",
+        buyerPrivateKey: "0xkey",
+        network: "eip155:84532",
+        maxPriceUsd: 0.1,
+      },
+      deps,
+    );
+
+    expect(result.isError).toBeFalsy();
+    expect(result.content[0].text).toContain("Do not retry");
   });
 });
