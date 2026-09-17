@@ -1,0 +1,45 @@
+{
+  "name": "x402-tools",
+  "version": "0.1.0",
+  "description": "MCP stdio server exposing x402-paid package trust and repo merge lookup tools",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "x402-tools": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "snippets",
+    "server.json",
+    ".claude-plugin",
+    ".mcp.json"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JoseCOCA/x402-tools"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@x402/core": "^2.26.0",
+    "@x402/evm": "^2.26.0",
+    "@x402/fetch": "^2.26.0",
+    "viem": "^2.56.6",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
