@@ -22,8 +22,15 @@ function chainFor(network: string) {
  * Wraps `fetch` so any 402 it hits is paid automatically on-chain, using the
  * exact same x402/fetch + x402/evm + viem shape proven in x402-api's
  * scripts/paid-call.mjs buyer script.
+ *
+ * `maxPriceUsd` is enforced via the x402 client's own `setSpendControls`,
+ * not just a local pre-check on the caller's side. That matters because a
+ * seller can offer multiple `accepts` across networks/assets; only the
+ * client (after filtering to the network/scheme actually registered here)
+ * knows which one it is about to sign, so that's the only place the cap can
+ * be checked against the amount that will really be paid.
  */
-export function createPaidFetch(privateKey: string, network: string): FetchLike {
+export function createPaidFetch(privateKey: string, network: string, maxPriceUsd: number): FetchLike {
   const chain = chainFor(network);
   const publicClient = createPublicClient({ chain, transport: http() });
   const account = privateKeyToAccount(privateKey as `0x${string}`);
@@ -33,6 +40,8 @@ export function createPaidFetch(privateKey: string, network: string): FetchLike 
     network as `${string}:${string}`,
     new ExactEvmScheme(signer),
   );
+  client.setSpendControls({ maxAmountPerPayment: maxPriceUsd });
+
   return wrapFetchWithPayment(fetch, client) as FetchLike;
 }
 

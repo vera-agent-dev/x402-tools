@@ -1,18 +1,33 @@
 import { describe, expect, it, vi } from "vitest";
 
-const { wrapFetchWithPayment, registerMock, x402ClientCtor, decodePaymentResponseHeader } =
-  vi.hoisted(() => {
-    const wrapFetchWithPayment = vi.fn((fetchImpl: typeof fetch) => fetchImpl);
-    const registerMock = vi.fn().mockReturnThis();
-    const x402ClientCtor = vi.fn().mockImplementation(() => ({ register: registerMock }));
-    const decodePaymentResponseHeader = vi.fn().mockReturnValue({
-      success: true,
-      transaction: "0xdeadbeef",
-      network: "eip155:84532",
-      payer: "0xBuyer",
-    });
-    return { wrapFetchWithPayment, registerMock, x402ClientCtor, decodePaymentResponseHeader };
+const {
+  wrapFetchWithPayment,
+  registerMock,
+  setSpendControlsMock,
+  x402ClientCtor,
+  decodePaymentResponseHeader,
+} = vi.hoisted(() => {
+  const wrapFetchWithPayment = vi.fn((fetchImpl: typeof fetch) => fetchImpl);
+  const registerMock = vi.fn().mockReturnThis();
+  const setSpendControlsMock = vi.fn().mockReturnThis();
+  const x402ClientCtor = vi.fn().mockImplementation(() => ({
+    register: registerMock,
+    setSpendControls: setSpendControlsMock,
+  }));
+  const decodePaymentResponseHeader = vi.fn().mockReturnValue({
+    success: true,
+    transaction: "0xdeadbeef",
+    network: "eip155:84532",
+    payer: "0xBuyer",
   });
+  return {
+    wrapFetchWithPayment,
+    registerMock,
+    setSpendControlsMock,
+    x402ClientCtor,
+    decodePaymentResponseHeader,
+  };
+});
 
 vi.mock("@x402/fetch", () => ({
   x402Client: x402ClientCtor,
@@ -43,7 +58,7 @@ import { createPaidFetch, decodeSettlement } from "./paymentClient.js";
 
 describe("createPaidFetch", () => {
   it("registers an ExactEvmScheme client for the configured network and wraps fetch", () => {
-    const paidFetch = createPaidFetch("0xprivatekey", "eip155:84532");
+    const paidFetch = createPaidFetch("0xprivatekey", "eip155:84532", 0.1);
 
     expect(x402ClientCtor).toHaveBeenCalled();
     expect(registerMock).toHaveBeenCalledWith("eip155:84532", expect.anything());
@@ -52,7 +67,13 @@ describe("createPaidFetch", () => {
   });
 
   it("throws for a network it does not recognize", () => {
-    expect(() => createPaidFetch("0xprivatekey", "eip155:1")).toThrow(/unsupported network/i);
+    expect(() => createPaidFetch("0xprivatekey", "eip155:1", 0.1)).toThrow(/unsupported network/i);
+  });
+
+  it("pushes X402_MAX_PRICE_USD into the client's real spend controls, not just a local pre-check", () => {
+    createPaidFetch("0xprivatekey", "eip155:84532", 0.1);
+
+    expect(setSpendControlsMock).toHaveBeenCalledWith({ maxAmountPerPayment: 0.1 });
   });
 });
 

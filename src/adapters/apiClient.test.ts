@@ -27,6 +27,18 @@ describe("fetchCatalog", () => {
 
     await expect(fetchCatalog("https://api.example.com")).rejects.toThrow(ApiError);
   });
+
+  it("forwards an AbortSignal so a stalled seller can be timed out by the caller", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("[]", { status: 200 }));
+    const controller = new AbortController();
+
+    await fetchCatalog("https://api.example.com", fetchMock, controller.signal);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/products",
+      expect.objectContaining({ signal: controller.signal }),
+    );
+  });
 });
 
 describe("fetchProduct", () => {
@@ -71,5 +83,30 @@ describe("fetchProduct", () => {
     );
 
     expect(customFetch).toHaveBeenCalled();
+  });
+
+  it("refuses a catalog path that resolves to a different origin than the configured base", async () => {
+    const fetchMock = vi.fn();
+
+    await expect(
+      fetchProduct(
+        "https://api.example.com",
+        "https://evil.example.com/steal",
+        { a: "b" },
+        fetchMock,
+      ),
+    ).rejects.toThrow(/origin/i);
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses a protocol-relative path that would escape the configured origin", async () => {
+    const fetchMock = vi.fn();
+
+    await expect(
+      fetchProduct("https://api.example.com", "//evil.example.com/steal", {}, fetchMock),
+    ).rejects.toThrow(/origin/i);
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
