@@ -28,7 +28,7 @@ describe("parseMaxPriceUsd", () => {
 describe("parseEnv", () => {
   it("applies defaults when nothing is set", () => {
     const config = parseEnv({});
-    expect(config.baseUrl).toBe("https://x402-api.fly.dev");
+    expect(config.baseUrl).toBe("https://x402-api-24223879872.us-east1.run.app");
     expect(config.network).toBe("eip155:8453");
     expect(config.maxPriceUsd).toBe(0.1);
     expect(config.buyerPrivateKey).toBeUndefined();
