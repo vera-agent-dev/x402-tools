@@ -31,6 +31,23 @@ const repoMergeEntry = {
   output_schema: { type: "object", properties: {} },
 };
 
+const a11yAuditEntry = {
+  id: "a11y-audit",
+  path: "/v1/a11y-audit",
+  price_usd: 0.08,
+  description: "WCAG audit",
+  input_schema: {
+    type: "object",
+    properties: {
+      url: { type: "string", maxLength: 2048 },
+      viewport: { type: "string", enum: ["desktop", "mobile"], default: "desktop" },
+      wcag: { type: "string", enum: ["2.1-aa", "2.2-aa"], default: "2.2-aa" },
+    },
+    required: ["url"],
+  },
+  output_schema: { type: "object", properties: {} },
+};
+
 type RegisteredTools = Record<string, { description?: string; handler: (args: unknown, extra: unknown) => unknown }>;
 
 function tools(server: Awaited<ReturnType<typeof createServer>>): RegisteredTools {
@@ -111,6 +128,35 @@ describe("createServer", () => {
       "https://api.example.com",
       "/v1/package-trust",
       { ecosystem: "npm", name: "left-pad" },
+    );
+  });
+
+  it("registers a11y_audit from the catalog and forwards url/viewport/wcag as query params", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(JSON.stringify([a11yAuditEntry]), { status: 200 })),
+    );
+    const deps: PaidToolDeps = {
+      fetchProduct: vi.fn().mockResolvedValue(new Response(JSON.stringify({ score: 90 }), { status: 200 })),
+      createPaidFetch: vi.fn(),
+      decodeSettlement: vi.fn(),
+    };
+
+    const server = await createServer(
+      { baseUrl: "https://api.example.com", network: "eip155:8453", maxPriceUsd: 0.1 },
+      deps,
+    );
+    const registered = tools(server);
+
+    expect(registered.a11y_audit).toBeDefined();
+    expect(registered.a11y_audit.description).toContain("$0.08");
+
+    await registered.a11y_audit.handler({ url: "https://example.com", wcag: "2.1-aa" }, {});
+
+    expect(deps.fetchProduct).toHaveBeenCalledWith(
+      "https://api.example.com",
+      "/v1/a11y-audit",
+      { url: "https://example.com", wcag: "2.1-aa" },
     );
   });
 

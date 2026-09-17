@@ -20,7 +20,7 @@ if (process.argv.includes("--version") || process.argv.includes("-v")) {
 
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
   console.log(
-    "x402-tools: an MCP stdio server for x402-paid package-trust and repo-merge lookups.\n" +
+    "x402-tools: an MCP stdio server for x402-paid package-trust, repo-merge and a11y-audit lookups.\n" +
       "Usage: x402-tools (no arguments; run as an MCP server over stdio)\n" +
       "       x402-tools --version\n" +
       "Env: X402_BASE_URL, X402_BUYER_PRIVATE_KEY, X402_NETWORK, X402_MAX_PRICE_USD\n" +

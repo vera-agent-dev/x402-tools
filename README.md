@@ -21,6 +21,7 @@ signal, not a guarantee — see "What this does not do" below.
 | `list_products` | Free | The live product catalog: ids, paths, prices, input/output schemas. |
 | `package_trust_check` | Fetched live via `list_products` (currently $0.05 USDC) | Is this npm/PyPI package safe to install? Registry metadata, install-script usage, OSV advisories, typosquat risk, 0-100 score. |
 | `repo_merge_lookup` | Fetched live via `list_products` (currently $0.05 USDC) | Will this GitHub repo merge an AI-authored or external PR? Stated AI/contribution policy plus historical merge rates, 0-100 score. |
+| `a11y_audit` | Fetched live via `list_products` (currently $0.08 USDC) | Is this public page accessible? WCAG 2.1/2.2 AA audit with headless Chromium + axe-core: violations by impact, per-rule detail, 0-100 score. |
 
 Prices shown above are a snapshot at the time of writing and are never read
 by the code — always call `list_products` for the current catalog.

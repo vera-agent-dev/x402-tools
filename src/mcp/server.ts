@@ -15,6 +15,7 @@ export interface ServerConfig {
 const PAID_TOOLS = [
   { catalogId: "package-trust", toolName: "package_trust_check" },
   { catalogId: "repo-merge", toolName: "repo_merge_lookup" },
+  { catalogId: "a11y-audit", toolName: "a11y_audit" },
 ] as const;
 
 /**

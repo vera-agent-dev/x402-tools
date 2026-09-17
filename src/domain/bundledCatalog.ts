@@ -38,4 +38,25 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
     },
     output_schema: { type: "object", properties: {} },
   },
+  {
+    id: "a11y-audit",
+    path: "/v1/a11y-audit",
+    price_usd: 0.08,
+    description:
+      "WCAG accessibility audit of a public URL using headless Chromium and axe-core: violation/pass/incomplete counts by impact, per-rule detail, and a 0-100 score.",
+    input_schema: {
+      type: "object",
+      properties: {
+        url: {
+          type: "string",
+          maxLength: 2048,
+          description: "Public http(s) URL to audit. Private/loopback/link-local hosts are rejected.",
+        },
+        viewport: { type: "string", enum: ["desktop", "mobile"], default: "desktop" },
+        wcag: { type: "string", enum: ["2.1-aa", "2.2-aa"], default: "2.2-aa" },
+      },
+      required: ["url"],
+    },
+    output_schema: { type: "object", properties: {} },
+  },
 ];
