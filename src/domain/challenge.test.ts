@@ -43,6 +43,71 @@ describe("decodeChallenge", () => {
   it("throws a clear error on invalid base64/JSON", () => {
     expect(() => decodeChallenge("not-base64-json")).toThrow();
   });
+
+  it("prefers the accept matching preferredNetwork over accepts[0]", () => {
+    const header = encode({
+      x402Version: 2,
+      accepts: [
+        {
+          scheme: "exact",
+          network: "eip155:84532",
+          amount: "1000",
+          asset: "0xTestnetUSDC",
+          payTo: "0xSeller",
+        },
+        {
+          scheme: "exact",
+          network: "eip155:8453",
+          amount: "900000",
+          asset: "0xMainnetUSDC",
+          payTo: "0xSeller",
+        },
+      ],
+    });
+
+    const challenge = decodeChallenge(header, "eip155:8453");
+
+    expect(challenge.network).toBe("eip155:8453");
+    expect(challenge.amountRaw).toBe("900000");
+  });
+
+  it("falls back to accepts[0] when preferredNetwork has no match", () => {
+    const header = encode({
+      x402Version: 2,
+      accepts: [
+        {
+          scheme: "exact",
+          network: "eip155:84532",
+          amount: "1000",
+          asset: "0xTestnetUSDC",
+          payTo: "0xSeller",
+        },
+      ],
+    });
+
+    const challenge = decodeChallenge(header, "eip155:8453");
+
+    expect(challenge.network).toBe("eip155:84532");
+  });
+
+  it("throws instead of crashing when the decoded body is null", () => {
+    expect(() => decodeChallenge(encode(null))).toThrow(/not a JSON object/i);
+  });
+
+  it("throws instead of crashing when the decoded body is a number", () => {
+    expect(() => decodeChallenge(encode(42))).toThrow(/not a JSON object/i);
+  });
+
+  it("throws when accepts is present but not an array", () => {
+    expect(() => decodeChallenge(encode({ x402Version: 2, accepts: "nope" }))).toThrow(
+      /no accepted payment/i,
+    );
+  });
+
+  it("throws when an accept entry is missing required fields", () => {
+    const header = encode({ x402Version: 2, accepts: [{ scheme: "exact" }] });
+    expect(() => decodeChallenge(header)).toThrow(/missing required fields/i);
+  });
 });
 
 describe("isWithinSpendingGuard", () => {

@@ -29,21 +29,61 @@ interface RawPaymentRequired {
   accepts?: RawAccept[];
 }
 
-/** Decodes the base64-encoded JSON carried in the `payment-required` header. */
-export function decodeChallenge(header: string): DecodedChallenge {
-  let parsed: RawPaymentRequired;
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isValidAccept(
+  value: unknown,
+): value is { amount: string; asset: string; payTo: string; network: string; scheme?: string } {
+  return (
+    isPlainObject(value) &&
+    typeof value.amount === "string" &&
+    typeof value.asset === "string" &&
+    typeof value.payTo === "string" &&
+    typeof value.network === "string"
+  );
+}
+
+/**
+ * Decodes the base64-encoded JSON carried in the `payment-required` header.
+ *
+ * When `preferredNetwork` is given and an accept for that network is present,
+ * that one is returned instead of `accepts[0]` — a seller may offer several
+ * networks, and the one actually paid is whichever the buyer is registered
+ * for, not necessarily the first in the list. Hardened against a decoded
+ * body that isn't the expected shape at all (null, a number, a string, or
+ * `accepts` missing/not an array).
+ */
+export function decodeChallenge(header: string, preferredNetwork?: string): DecodedChallenge {
+  let parsed: unknown;
   try {
     const json = Buffer.from(header, "base64").toString("utf-8");
-    parsed = JSON.parse(json) as RawPaymentRequired;
+    parsed = JSON.parse(json);
   } catch (cause) {
     throw new Error("Could not decode payment-required header: invalid base64/JSON.", {
       cause,
     });
   }
 
-  const accept = parsed.accepts?.[0];
-  if (!accept || !accept.amount || !accept.asset || !accept.payTo || !accept.network) {
+  if (!isPlainObject(parsed)) {
+    throw new Error("Decoded payment-required header is not a JSON object.");
+  }
+
+  const accepts = (parsed as RawPaymentRequired).accepts;
+  if (!Array.isArray(accepts) || accepts.length === 0) {
     throw new Error("Decoded payment-required header has no accepted payment options.");
+  }
+
+  const preferred = preferredNetwork
+    ? accepts.find((candidate) => isPlainObject(candidate) && candidate.network === preferredNetwork)
+    : undefined;
+  const accept = preferred ?? accepts[0];
+
+  if (!isValidAccept(accept)) {
+    throw new Error(
+      "Decoded payment-required header's selected accept entry is missing required fields.",
+    );
   }
 
   return {

@@ -3,6 +3,7 @@ import {
   describeToolWithPrice,
   findProduct,
   jsonSchemaToZodShape,
+  validateCatalog,
   type CatalogEntry,
 } from "./catalog.js";
 
@@ -60,5 +61,45 @@ describe("jsonSchemaToZodShape", () => {
 
     expect(shape.repo.safeParse(undefined).success).toBe(false);
     expect(shape.extra.safeParse(undefined).success).toBe(true);
+  });
+});
+
+describe("validateCatalog", () => {
+  it("accepts a well-formed catalog and strips control characters from descriptions", () => {
+    const entries = validateCatalog([
+      { ...packageTrust, description: "Safe description" },
+    ]);
+    expect(entries[0].description).toBe("Safe description");
+  });
+
+  it("rejects a negative price_usd", () => {
+    expect(() => validateCatalog([{ ...packageTrust, price_usd: -0.05 }])).toThrow();
+  });
+
+  it("rejects a non-numeric price_usd", () => {
+    expect(() =>
+      validateCatalog([{ ...packageTrust, price_usd: "0.05" as unknown as number }]),
+    ).toThrow();
+  });
+
+  it("rejects a description longer than 300 characters", () => {
+    expect(() =>
+      validateCatalog([{ ...packageTrust, description: "x".repeat(301) }]),
+    ).toThrow();
+  });
+
+  it("rejects an entry missing id or path", () => {
+    const { id: _id, ...withoutId } = packageTrust;
+    expect(() => validateCatalog([withoutId as unknown as CatalogEntry])).toThrow();
+  });
+
+  it("rejects a non-array payload", () => {
+    expect(() => validateCatalog({ not: "an array" })).toThrow();
+  });
+
+  it("rejects when input_schema/output_schema are not objects", () => {
+    expect(() =>
+      validateCatalog([{ ...packageTrust, input_schema: "nope" as unknown as CatalogEntry["input_schema"] }]),
+    ).toThrow();
   });
 });
