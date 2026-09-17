@@ -26,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/JoseCOCA/x402-tools"
+    "url": "https://github.com/vera-agent-dev/x402-tools"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

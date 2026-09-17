@@ -5,12 +5,12 @@
   "author": {
     "name": "Jose Coca"
   },
-  "homepage": "https://github.com/JoseCOCA/x402-tools",
+  "homepage": "https://github.com/vera-agent-dev/x402-tools",
   "license": "MIT",
   "mcpServers": {
     "x402-tools": {
       "command": "npx",
-      "args": ["-y", "github:JoseCOCA/x402-tools"],
+      "args": ["-y", "github:vera-agent-dev/x402-tools"],
       "env": {
         "X402_BASE_URL": "https://x402-api.fly.dev"
       }

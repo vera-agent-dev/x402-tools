@@ -41,7 +41,7 @@ input among several.
   "mcpServers": {
     "x402-tools": {
       "command": "npx",
-      "args": ["-y", "github:JoseCOCA/x402-tools"],
+      "args": ["-y", "github:vera-agent-dev/x402-tools"],
       "env": {
         "X402_BASE_URL": "https://x402-api.fly.dev"
       }
@@ -55,7 +55,7 @@ Once published to npm, the same config works with `"args": ["-y", "x402-tools"]`
 ### Local checkout
 
 ```bash
-git clone https://github.com/JoseCOCA/x402-tools
+git clone https://github.com/vera-agent-dev/x402-tools
 cd x402-tools
 npm install
 npm run build
@@ -121,7 +121,7 @@ the seller API as ordinary query parameters — don't pass anything sensitive.
 
 - npm: package name `x402-tools`, `npm publish` once ready; update
   `server.json` and this README's npx snippet to drop the `github:` prefix.
-- MCP Registry: `server.json` follows the `io.github.JoseCOCA/x402-tools`
+- MCP Registry: `server.json` follows the `io.github.vera-agent-dev/x402-tools`
   naming convention from the [registry schema](https://github.com/modelcontextprotocol/registry).
 
 ## Dev / test
@@ -138,7 +138,7 @@ npm run smoke      # end-to-end stdio smoke test against a running seller API
 
 - `X402_BASE_URL` default (`https://x402-api.fly.dev`) is a placeholder
   until the seller API is actually deployed.
-- Not yet published to npm; install via `npx github:JoseCOCA/x402-tools`
+- Not yet published to npm; install via `npx github:vera-agent-dev/x402-tools`
   until then.
 
 ## Links
