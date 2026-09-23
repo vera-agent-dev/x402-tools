@@ -24,9 +24,9 @@ signal, not a guarantee — see "What this does not do" below.
 | `repo_merge_lookup` | Fetched live via `list_products` (currently $0.05 USDC) | Will this GitHub repo merge an AI-authored or external PR? Stated AI/contribution policy plus historical merge rates, 0-100 score. |
 | `a11y_audit` | Fetched live via `list_products` (currently $0.08 USDC) | Is this public page accessible? WCAG 2.1/2.2 AA audit with headless Chromium + axe-core: violations by impact, per-rule detail, 0-100 score. |
 | `schedule_solve` | Fetched live via `list_products` (currently $0.30 USDC) | Solves a scheduling/roster problem (gym rosters, dance-school timetables, shift plans) with OR-Tools CP-SAT: assigns resources to slot demands honoring availability, tags, and constraints. Takes a JSON body (`slots`, `resources`, `demands`, optional `constraints`/`objective`), not query params. |
-| `mx_rfc_validate` | Fetched live via `list_products` (currently $0.03 USDC) | Structural validation of a Mexican RFC (persona física/moral, embedded date, SAT check digit) plus Article 69-B (EFOS) blacklist status. |
-| `mx_clabe_validate` | Fetched live via `list_products` (currently $0.02 USDC) | Validates an 18-digit Mexican CLABE: check digit, bank identification, plaza, and account number. |
-| `mx_cfdi_verify` | Fetched live via `list_products` (currently $0.05 USDC) | Verifies a Mexican electronic invoice (CFDI) with SAT: status (vigente/cancelado), cancelability, and EFOS validation. |
+| `mx_rfc_validate` | Fetched live via `list_products` (currently $0.03 USDC) | Structural validation of a Mexican RFC (persona física/moral, embedded date, SAT check digit) plus Article 69-B (EFOS) blacklist status. Takes a JSON body (`rfc`), not query params. |
+| `mx_clabe_validate` | Fetched live via `list_products` (currently $0.02 USDC) | Validates an 18-digit Mexican CLABE: check digit, bank identification, plaza, and account number. Takes a JSON body (`clabe`), not query params. |
+| `mx_cfdi_verify` | Fetched live via `list_products` (currently $0.05 USDC) | Verifies a Mexican electronic invoice (CFDI) with SAT: status (vigente/cancelado), cancelability, and EFOS validation. Takes a JSON body (`uuid`, `rfcEmisor`, `rfcReceptor`, `total`), not query params. |
 
 Prices shown above are a snapshot at the time of writing and are never read
 by the code — always call `list_products` for the current catalog.
@@ -132,8 +132,10 @@ spend automatically — never your main wallet. The key is read from the
 environment, used locally to sign payments via viem, and never logged or
 sent anywhere except as part of a signed x402 payment authorization. Paid
 tool arguments (e.g. the package name or repo you're looking up) are sent to
-the seller API as ordinary query parameters (as a JSON body for POST tools
-like `schedule_solve`) — don't pass anything sensitive.
+the seller API as ordinary query parameters for GET tools, or as a JSON body
+for POST tools (`schedule_solve` and the `mx_*` tools, which carry
+PII-adjacent fields such as RFC/CLABE/CFDI data) — don't pass anything
+sensitive regardless.
 
 ## Publishing (maintainer notes)
 

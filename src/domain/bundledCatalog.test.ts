@@ -38,26 +38,28 @@ describe("BUNDLED_CATALOG", () => {
     expect(entry?.input_schema.required).toEqual(["slots", "resources", "demands"]);
   });
 
-  it("carries the mx-rfc contract: GET /v1/mx/rfc at $0.03 with rfc required", () => {
+  it("carries the mx-rfc contract: POST /v1/mx/rfc at $0.03 with rfc required in the JSON body", () => {
     const entry = BUNDLED_CATALOG.find((e) => e.id === "mx-rfc");
     expect(entry).toBeDefined();
-    expect(entry?.method).toBeUndefined();
+    expect(entry?.method).toBe("POST");
     expect(entry?.path).toBe("/v1/mx/rfc");
     expect(entry?.price_usd).toBe(0.03);
     expect(entry?.input_schema.required).toEqual(["rfc"]);
   });
 
-  it("carries the mx-clabe contract: GET /v1/mx/clabe at $0.02 with clabe required", () => {
+  it("carries the mx-clabe contract: POST /v1/mx/clabe at $0.02 with clabe required in the JSON body", () => {
     const entry = BUNDLED_CATALOG.find((e) => e.id === "mx-clabe");
     expect(entry).toBeDefined();
+    expect(entry?.method).toBe("POST");
     expect(entry?.path).toBe("/v1/mx/clabe");
     expect(entry?.price_usd).toBe(0.02);
     expect(entry?.input_schema.required).toEqual(["clabe"]);
   });
 
-  it("carries the mx-cfdi contract: GET /v1/mx/cfdi at $0.05 with uuid/rfcEmisor/rfcReceptor/total required", () => {
+  it("carries the mx-cfdi contract: POST /v1/mx/cfdi at $0.05 with uuid/rfcEmisor/rfcReceptor/total required in the JSON body", () => {
     const entry = BUNDLED_CATALOG.find((e) => e.id === "mx-cfdi");
     expect(entry).toBeDefined();
+    expect(entry?.method).toBe("POST");
     expect(entry?.path).toBe("/v1/mx/cfdi");
     expect(entry?.price_usd).toBe(0.05);
     expect(entry?.input_schema.required).toEqual(["uuid", "rfcEmisor", "rfcReceptor", "total"]);

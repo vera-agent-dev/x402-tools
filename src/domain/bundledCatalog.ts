@@ -106,9 +106,10 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
   {
     id: "mx-rfc",
     path: "/v1/mx/rfc",
+    method: "POST",
     price_usd: 0.03,
     description:
-      "Structural validation of a Mexican RFC (persona física/moral, embedded date, SAT check digit) plus Article 69-B (EFOS) blacklist status.",
+      "Structural validation of a Mexican RFC (sent as a JSON body, not a query param): persona física/moral, embedded date, SAT check digit, plus Article 69-B (EFOS) blacklist status.",
     input_schema: {
       type: "object",
       properties: {
@@ -121,9 +122,10 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
   {
     id: "mx-clabe",
     path: "/v1/mx/clabe",
+    method: "POST",
     price_usd: 0.02,
     description:
-      "Validates an 18-digit Mexican CLABE: check digit, bank identification (Banxico/SPEI catalog), plaza, and account number.",
+      "Validates an 18-digit Mexican CLABE (sent as a JSON body, not a query param): check digit, bank identification (Banxico/SPEI catalog), plaza, and account number.",
     input_schema: {
       type: "object",
       properties: {
@@ -136,9 +138,10 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
   {
     id: "mx-cfdi",
     path: "/v1/mx/cfdi",
+    method: "POST",
     price_usd: 0.05,
     description:
-      "Verifies a Mexican electronic invoice (CFDI) with SAT: status (vigente/cancelado), cancelability, and EFOS validation, via SAT's public CFDI consultation web service. Requires a real CFDI's UUID, issuer and receiver RFCs, and total; the example values are illustrative and return 404 (not charged).",
+      "Verifies a Mexican electronic invoice (CFDI) with SAT (JSON body, not query params): status (vigente/cancelado), cancelability, and EFOS validation. Requires a real CFDI's UUID, issuer and receiver RFCs, and total; the example values are illustrative and return 404 (not charged).",
     input_schema: {
       type: "object",
       properties: {

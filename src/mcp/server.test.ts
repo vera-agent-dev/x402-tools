@@ -66,6 +66,20 @@ const scheduleSolveEntry = {
   output_schema: { type: "object", properties: {} },
 };
 
+const mxRfcEntry = {
+  id: "mx-rfc",
+  path: "/v1/mx/rfc",
+  method: "POST",
+  price_usd: 0.03,
+  description: "Structural validation of a Mexican RFC",
+  input_schema: {
+    type: "object",
+    properties: { rfc: { type: "string" } },
+    required: ["rfc"],
+  },
+  output_schema: { type: "object", properties: {} },
+};
+
 type RegisteredTools = Record<string, { description?: string; handler: (args: unknown, extra: unknown) => unknown }>;
 
 function tools(server: Awaited<ReturnType<typeof createServer>>): RegisteredTools {
@@ -210,6 +224,46 @@ describe("createServer", () => {
       undefined,
       "POST",
     );
+  });
+
+  it("registers mx_rfc_validate from the catalog and forwards the rfc field as a JSON body, never a query string", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(JSON.stringify([mxRfcEntry]), { status: 200 })),
+    );
+    const deps: PaidToolDeps = {
+      fetchProduct: vi.fn().mockResolvedValue(new Response(JSON.stringify({ valid: true }), { status: 200 })),
+      createPaidFetch: vi.fn(),
+      decodeSettlement: vi.fn(),
+    };
+
+    const server = await createServer(
+      { baseUrl: "https://api.example.com", network: "eip155:8453", maxPriceUsd: 0.1 },
+      deps,
+    );
+    const registered = tools(server);
+
+    expect(registered.mx_rfc_validate).toBeDefined();
+    expect(registered.mx_rfc_validate.description).toContain("$0.03");
+
+    await registered.mx_rfc_validate.handler({ rfc: "EKU9003173C9" }, {});
+
+    expect(deps.fetchProduct).toHaveBeenCalledWith(
+      "https://api.example.com",
+      "/v1/mx/rfc",
+      { rfc: "EKU9003173C9" },
+      undefined,
+      "POST",
+    );
+    // Regression guard: the PII-bearing field must never be serialized into a
+    // URL/query string anywhere in the call args.
+    for (const call of (deps.fetchProduct as ReturnType<typeof vi.fn>).mock.calls) {
+      for (const arg of call) {
+        if (typeof arg === "string") {
+          expect(arg).not.toContain("EKU9003173C9");
+        }
+      }
+    }
   });
 
   it("list_products always calls the live API at call time, independent of the startup catalog source", async () => {
