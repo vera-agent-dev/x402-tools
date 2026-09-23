@@ -59,4 +59,96 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
     },
     output_schema: { type: "object", properties: {} },
   },
+  {
+    id: "schedule-solve",
+    path: "/v1/schedule-solve",
+    method: "POST",
+    price_usd: 0.3,
+    description:
+      // Trimmed to <=300 chars for CatalogEntrySchema (the seller's own live
+      // description exceeds this — see the discovery note in the PR/report).
+      "Solves scheduling/roster problems (class rosters, timetables, shift plans) with OR-Tools CP-SAT: assigns resources to slot demands honoring availability, tags and constraints (no double-booking, max-per-day, min-rest, pairs, max hours). Infeasible inputs name the conflicting constraints.",
+    input_schema: {
+      type: "object",
+      properties: {
+        slots: {
+          type: "array",
+          description: "Time or label slots demands can be assigned to.",
+          items: { type: "object" },
+        },
+        resources: {
+          type: "array",
+          description: "People/rooms/equipment that can be assigned, with tags and availability.",
+          items: { type: "object" },
+        },
+        demands: {
+          type: "array",
+          description: "Assignment requirements, each tied to a slot.",
+          items: { type: "object" },
+        },
+        constraints: {
+          type: "array",
+          description:
+            "Optional typed constraints: no_double_booking, max_per_day, min_rest_between, forbid_pair, require_pair, fixed_assignment, max_total_hours.",
+          items: { type: "object" },
+        },
+        objective: {
+          type: "string",
+          enum: ["balance_load", "maximize_preferences", "minimize_resources"],
+          default: "balance_load",
+        },
+        timeLimitSeconds: { type: "number", default: 5, maximum: 15 },
+      },
+      required: ["slots", "resources", "demands"],
+    },
+    output_schema: { type: "object", properties: {} },
+  },
+  {
+    id: "mx-rfc",
+    path: "/v1/mx/rfc",
+    price_usd: 0.03,
+    description:
+      "Structural validation of a Mexican RFC (persona física/moral, embedded date, SAT check digit) plus Article 69-B (EFOS) blacklist status.",
+    input_schema: {
+      type: "object",
+      properties: {
+        rfc: { type: "string", description: "RFC to validate, e.g. EKU9003173C9" },
+      },
+      required: ["rfc"],
+    },
+    output_schema: { type: "object", properties: {} },
+  },
+  {
+    id: "mx-clabe",
+    path: "/v1/mx/clabe",
+    price_usd: 0.02,
+    description:
+      "Validates an 18-digit Mexican CLABE: check digit, bank identification (Banxico/SPEI catalog), plaza, and account number.",
+    input_schema: {
+      type: "object",
+      properties: {
+        clabe: { type: "string", description: "18-digit CLABE" },
+      },
+      required: ["clabe"],
+    },
+    output_schema: { type: "object", properties: {} },
+  },
+  {
+    id: "mx-cfdi",
+    path: "/v1/mx/cfdi",
+    price_usd: 0.05,
+    description:
+      "Verifies a Mexican electronic invoice (CFDI) with SAT: status (vigente/cancelado), cancelability, and EFOS validation, via SAT's public CFDI consultation web service. Requires a real CFDI's UUID, issuer and receiver RFCs, and total; the example values are illustrative and return 404 (not charged).",
+    input_schema: {
+      type: "object",
+      properties: {
+        uuid: { type: "string", description: "CFDI UUID (8-4-4-4-12 hex; not necessarily UUID v4)" },
+        rfcEmisor: { type: "string" },
+        rfcReceptor: { type: "string" },
+        total: { type: "string", description: "CFDI total, as a decimal string" },
+      },
+      required: ["uuid", "rfcEmisor", "rfcReceptor", "total"],
+    },
+    output_schema: { type: "object", properties: {} },
+  },
 ];

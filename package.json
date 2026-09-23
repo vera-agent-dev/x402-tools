@@ -1,7 +1,7 @@
 {
   "name": "x402-tools",
   "version": "0.1.0",
-  "description": "MCP stdio server exposing x402-paid package trust and repo merge lookup tools",
+  "description": "MCP stdio server exposing x402-paid package-trust, repo-merge, a11y-audit, schedule-solve and mx-rfc/mx-clabe/mx-cfdi lookup tools",
   "type": "module",
   "license": "MIT",
   "bin": {

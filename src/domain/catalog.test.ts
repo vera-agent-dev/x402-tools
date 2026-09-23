@@ -62,6 +62,47 @@ describe("jsonSchemaToZodShape", () => {
     expect(shape.repo.safeParse(undefined).success).toBe(false);
     expect(shape.extra.safeParse(undefined).success).toBe(true);
   });
+
+  it("converts a number property", () => {
+    const shape = jsonSchemaToZodShape({
+      type: "object",
+      properties: { timeLimitSeconds: { type: "number", default: 5, maximum: 15 } },
+      required: [],
+    });
+
+    expect(shape.timeLimitSeconds.safeParse(5).success).toBe(true);
+    expect(shape.timeLimitSeconds.safeParse("5").success).toBe(false);
+  });
+
+  it("converts an array of objects property (e.g. schedule-solve's slots/resources/demands)", () => {
+    const shape = jsonSchemaToZodShape({
+      type: "object",
+      properties: {
+        slots: {
+          type: "array",
+          description: "Time or label slots demands can be assigned to.",
+          items: { type: "object" },
+        },
+      },
+      required: ["slots"],
+    });
+
+    expect(
+      shape.slots.safeParse([{ id: "mon-9am", day: "MON", start: "09:00", end: "10:00" }]).success,
+    ).toBe(true);
+    expect(shape.slots.safeParse(undefined).success).toBe(false);
+    expect(shape.slots.safeParse("not-an-array").success).toBe(false);
+  });
+
+  it("converts a plain object property to a record", () => {
+    const shape = jsonSchemaToZodShape({
+      type: "object",
+      properties: { extra: { type: "object" } },
+      required: [],
+    });
+
+    expect(shape.extra.safeParse({ any: "shape" }).success).toBe(true);
+  });
 });
 
 describe("validateCatalog", () => {
@@ -101,5 +142,15 @@ describe("validateCatalog", () => {
     expect(() =>
       validateCatalog([{ ...packageTrust, input_schema: "nope" as unknown as CatalogEntry["input_schema"] }]),
     ).toThrow();
+  });
+
+  it("accepts an entry with method: POST (e.g. schedule-solve)", () => {
+    const entries = validateCatalog([{ ...packageTrust, method: "POST" }]);
+    expect(entries[0].method).toBe("POST");
+  });
+
+  it("defaults to no method (GET-style callers treat it as GET) when omitted", () => {
+    const entries = validateCatalog([packageTrust]);
+    expect(entries[0].method).toBeUndefined();
   });
 });

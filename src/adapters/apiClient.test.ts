@@ -109,4 +109,34 @@ describe("fetchProduct", () => {
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("sends a JSON body (no query string) for a POST product, e.g. schedule-solve", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
+
+    const body = { slots: [{ id: "mon-9am" }], resources: [{ id: "alice" }], demands: [] };
+    await fetchProduct("https://api.example.com", "/v1/schedule-solve", body, fetchMock, "POST");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/v1/schedule-solve",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({ "content-type": "application/json" }),
+        body: JSON.stringify(body),
+      }),
+    );
+  });
+
+  it("defaults to GET with query params when method is omitted", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
+
+    await fetchProduct("https://api.example.com", "/v1/package-trust", {
+      ecosystem: "npm",
+      name: "left-pad",
+    }, fetchMock);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/v1/package-trust?ecosystem=npm&name=left-pad",
+      expect.objectContaining({ method: "GET" }),
+    );
+  });
 });

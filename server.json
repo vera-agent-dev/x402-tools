@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.vera-agent-dev/x402-tools",
-  "description": "Buyer-side MCP tools that pay per call over the x402 protocol: package install-safety checks and GitHub PR-merge likelihood lookups.",
+  "description": "Buyer-side MCP tools that pay per call over the x402 protocol: package install-safety checks, GitHub PR-merge likelihood, WCAG accessibility audits, roster/scheduling solving, and Mexican RFC/CLABE/CFDI validation.",
   "title": "x402 Tools",
   "websiteUrl": "https://github.com/vera-agent-dev/x402-tools",
   "repository": {
@@ -44,7 +44,7 @@
           "description": "Spending guard: refuses to auto-pay any single challenge above this USD amount.",
           "isRequired": false,
           "isSecret": false,
-          "default": "0.10"
+          "default": "0.30"
         }
       ]
     }

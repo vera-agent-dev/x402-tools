@@ -48,6 +48,24 @@ const a11yAuditEntry = {
   output_schema: { type: "object", properties: {} },
 };
 
+const scheduleSolveEntry = {
+  id: "schedule-solve",
+  path: "/v1/schedule-solve",
+  method: "POST",
+  price_usd: 0.3,
+  description: "Solves a scheduling/roster problem",
+  input_schema: {
+    type: "object",
+    properties: {
+      slots: { type: "array", items: { type: "object" } },
+      resources: { type: "array", items: { type: "object" } },
+      demands: { type: "array", items: { type: "object" } },
+    },
+    required: ["slots", "resources", "demands"],
+  },
+  output_schema: { type: "object", properties: {} },
+};
+
 type RegisteredTools = Record<string, { description?: string; handler: (args: unknown, extra: unknown) => unknown }>;
 
 function tools(server: Awaited<ReturnType<typeof createServer>>): RegisteredTools {
@@ -157,6 +175,40 @@ describe("createServer", () => {
       "https://api.example.com",
       "/v1/a11y-audit",
       { url: "https://example.com", wcag: "2.1-aa" },
+    );
+  });
+
+  it("registers schedule_solve from the catalog and forwards nested slots/resources/demands as a JSON body, not stringified", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(JSON.stringify([scheduleSolveEntry]), { status: 200 })),
+    );
+    const deps: PaidToolDeps = {
+      fetchProduct: vi
+        .fn()
+        .mockResolvedValue(new Response(JSON.stringify({ status: "optimal" }), { status: 200 })),
+      createPaidFetch: vi.fn(),
+      decodeSettlement: vi.fn(),
+    };
+
+    const server = await createServer(
+      { baseUrl: "https://api.example.com", network: "eip155:8453", maxPriceUsd: 0.5 },
+      deps,
+    );
+    const registered = tools(server);
+
+    expect(registered.schedule_solve).toBeDefined();
+    expect(registered.schedule_solve.description).toContain("$0.30");
+
+    const body = { slots: [{ id: "mon-9am" }], resources: [{ id: "alice" }], demands: [] };
+    await registered.schedule_solve.handler(body, {});
+
+    expect(deps.fetchProduct).toHaveBeenCalledWith(
+      "https://api.example.com",
+      "/v1/schedule-solve",
+      body,
+      undefined,
+      "POST",
     );
   });
 

@@ -16,6 +16,10 @@ const PAID_TOOLS = [
   { catalogId: "package-trust", toolName: "package_trust_check" },
   { catalogId: "repo-merge", toolName: "repo_merge_lookup" },
   { catalogId: "a11y-audit", toolName: "a11y_audit" },
+  { catalogId: "schedule-solve", toolName: "schedule_solve" },
+  { catalogId: "mx-rfc", toolName: "mx_rfc_validate" },
+  { catalogId: "mx-clabe", toolName: "mx_clabe_validate" },
+  { catalogId: "mx-cfdi", toolName: "mx_cfdi_verify" },
 ] as const;
 
 /**
@@ -80,6 +84,18 @@ export async function createServer(
         inputSchema: jsonSchemaToZodShape(entry.input_schema) as Record<string, z.ZodTypeAny>,
       },
       async (args: Record<string, unknown>) => {
+        // POST products (e.g. schedule-solve) take a nested JSON body —
+        // stringifying every value would turn slots/resources/demands into
+        // "[object Object]". GET products still go out as string query
+        // params, same as before.
+        if (entry.method === "POST") {
+          const jsonArgs: Record<string, unknown> = {};
+          for (const [key, value] of Object.entries(args)) {
+            if (value !== undefined) jsonArgs[key] = value;
+          }
+          return callPaidTool(entry, jsonArgs, config, deps);
+        }
+
         const stringArgs: Record<string, string> = {};
         for (const [key, value] of Object.entries(args)) {
           if (value !== undefined) stringArgs[key] = String(value);

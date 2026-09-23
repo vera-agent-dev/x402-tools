@@ -24,8 +24,9 @@ export interface PaidToolDeps {
   fetchProduct: (
     baseUrl: string,
     path: string,
-    params: Record<string, string>,
+    params: Record<string, unknown>,
     fetchImpl?: FetchLike,
+    method?: "GET" | "POST",
   ) => Promise<Response>;
   createPaidFetch: (privateKey: string, network: string, maxPriceUsd: number) => FetchLike;
   decodeSettlement: (response: Response) => Settlement | null;
@@ -61,11 +62,17 @@ function errorMessage(error: unknown): string {
  */
 export async function callPaidTool(
   entry: CatalogEntry,
-  params: Record<string, string>,
+  params: Record<string, unknown>,
   config: PaidToolConfig,
   deps: PaidToolDeps = defaultDeps,
 ): Promise<ToolTextResult> {
-  const initialRes = await deps.fetchProduct(config.baseUrl, entry.path, params);
+  // Preserves the exact (fewer-argument) call shape for GET entries — only
+  // POST entries (e.g. schedule-solve) need the method threaded through, so
+  // it's passed explicitly only then.
+  const initialRes =
+    entry.method === "POST"
+      ? await deps.fetchProduct(config.baseUrl, entry.path, params, undefined, "POST")
+      : await deps.fetchProduct(config.baseUrl, entry.path, params);
 
   if (initialRes.status !== 402) {
     if (!initialRes.ok) {
@@ -116,7 +123,10 @@ export async function callPaidTool(
 
   let paidRes: Response;
   try {
-    paidRes = await deps.fetchProduct(config.baseUrl, entry.path, params, paidFetch);
+    paidRes =
+      entry.method === "POST"
+        ? await deps.fetchProduct(config.baseUrl, entry.path, params, paidFetch, "POST")
+        : await deps.fetchProduct(config.baseUrl, entry.path, params, paidFetch);
   } catch (error) {
     // The real x402 client's spend controls rejected every candidate accept
     // (the authoritative check — see the docstring above). Treat this as a

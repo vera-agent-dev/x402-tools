@@ -40,12 +40,18 @@ export async function fetchCatalog(
  * relative one) silently redirect the call — and any auto-payment it
  * triggers — to an arbitrary origin. The resolved origin is asserted to
  * match the configured base before anything is fetched.
+ *
+ * `method` defaults to "GET" (params become query params). For "POST"
+ * products (e.g. schedule-solve, which takes nested slots/resources/demands
+ * arrays), `params` is sent verbatim as a JSON body instead — flattening a
+ * nested object into query params would lose its structure.
  */
 export async function fetchProduct(
   baseUrl: string,
   path: string,
-  params: Record<string, string>,
+  params: Record<string, unknown>,
   fetchImpl: FetchLike = fetch,
+  method: "GET" | "POST" = "GET",
 ): Promise<Response> {
   const url = new URL(path, baseUrl);
   const expectedOrigin = new URL(baseUrl).origin;
@@ -55,8 +61,16 @@ export async function fetchProduct(
     );
   }
 
+  if (method === "POST") {
+    return fetchImpl(url.toString(), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(params),
+    });
+  }
+
   for (const [key, value] of Object.entries(params)) {
-    url.searchParams.set(key, value);
+    url.searchParams.set(key, String(value));
   }
   return fetchImpl(url.toString(), { method: "GET" });
 }

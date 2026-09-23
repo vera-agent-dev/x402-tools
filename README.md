@@ -1,10 +1,11 @@
 # x402-tools
 
-An MCP server that lets an AI agent pay, per call, for two small trust-signal
-lookups over the [x402](https://www.x402.org/) protocol: is this npm/PyPI
-package safe to install, and will this GitHub repo actually merge an
-AI-authored or external pull request. The catalog and every price are read
-live from the seller API at call time — nothing here is hardcoded.
+An MCP server that lets an AI agent pay, per call, for a set of small
+trust-signal and utility lookups over the [x402](https://www.x402.org/)
+protocol: package install-safety, GitHub PR-merge likelihood, WCAG
+accessibility audits, roster/scheduling solving, and Mexican RFC/CLABE/CFDI
+validation. The catalog and every price are read live from the seller API at
+call time — nothing here is hardcoded.
 
 ## Built and operated by an AI agent, under a human owner
 
@@ -22,6 +23,10 @@ signal, not a guarantee — see "What this does not do" below.
 | `package_trust_check` | Fetched live via `list_products` (currently $0.05 USDC) | Is this npm/PyPI package safe to install? Registry metadata, install-script usage, OSV advisories, typosquat risk, 0-100 score. |
 | `repo_merge_lookup` | Fetched live via `list_products` (currently $0.05 USDC) | Will this GitHub repo merge an AI-authored or external PR? Stated AI/contribution policy plus historical merge rates, 0-100 score. |
 | `a11y_audit` | Fetched live via `list_products` (currently $0.08 USDC) | Is this public page accessible? WCAG 2.1/2.2 AA audit with headless Chromium + axe-core: violations by impact, per-rule detail, 0-100 score. |
+| `schedule_solve` | Fetched live via `list_products` (currently $0.30 USDC) | Solves a scheduling/roster problem (gym rosters, dance-school timetables, shift plans) with OR-Tools CP-SAT: assigns resources to slot demands honoring availability, tags, and constraints. Takes a JSON body (`slots`, `resources`, `demands`, optional `constraints`/`objective`), not query params. |
+| `mx_rfc_validate` | Fetched live via `list_products` (currently $0.03 USDC) | Structural validation of a Mexican RFC (persona física/moral, embedded date, SAT check digit) plus Article 69-B (EFOS) blacklist status. |
+| `mx_clabe_validate` | Fetched live via `list_products` (currently $0.02 USDC) | Validates an 18-digit Mexican CLABE: check digit, bank identification, plaza, and account number. |
+| `mx_cfdi_verify` | Fetched live via `list_products` (currently $0.05 USDC) | Verifies a Mexican electronic invoice (CFDI) with SAT: status (vigente/cancelado), cancelability, and EFOS validation. |
 
 Prices shown above are a snapshot at the time of writing and are never read
 by the code — always call `list_products` for the current catalog.
@@ -102,7 +107,7 @@ untracked client config instead of editing this file in place.
 3. With `X402_BUYER_PRIVATE_KEY` set, the server wraps `fetch` with
    `@x402/fetch` + `@x402/evm` and pays automatically, then returns the
    result plus a `payment` block (amount, network, transaction hash).
-4. A spending guard, `X402_MAX_PRICE_USD` (default `0.10`), refuses to pay
+4. A spending guard, `X402_MAX_PRICE_USD` (default `0.30`), refuses to pay
    any single challenge above that amount and returns the challenge instead
    — the same as running with no key configured. This is enforced twice: a
    local pre-check on the accept matching your configured network, and
@@ -117,7 +122,7 @@ untracked client config instead of editing this file in place.
 | `X402_BASE_URL` | `https://x402-api-24223879872.us-east1.run.app` | Base URL of the seller API. |
 | `X402_BUYER_PRIVATE_KEY` | _(unset)_ | Private key of the paying wallet. Omit to run in challenge-only mode. |
 | `X402_NETWORK` | `eip155:8453` (Base) | CAIP-2 network id. Use `eip155:84532` for Base Sepolia testnet. |
-| `X402_MAX_PRICE_USD` | `0.10` | Spending guard: max USD per single paid call. |
+| `X402_MAX_PRICE_USD` | `0.30` | Spending guard: max USD per single paid call. |
 
 ## Security: `X402_BUYER_PRIVATE_KEY`
 
@@ -127,7 +132,8 @@ spend automatically — never your main wallet. The key is read from the
 environment, used locally to sign payments via viem, and never logged or
 sent anywhere except as part of a signed x402 payment authorization. Paid
 tool arguments (e.g. the package name or repo you're looking up) are sent to
-the seller API as ordinary query parameters — don't pass anything sensitive.
+the seller API as ordinary query parameters (as a JSON body for POST tools
+like `schedule_solve`) — don't pass anything sensitive.
 
 ## Publishing (maintainer notes)
 

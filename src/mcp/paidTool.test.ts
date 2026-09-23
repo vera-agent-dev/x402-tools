@@ -11,6 +11,16 @@ const entry: CatalogEntry = {
   output_schema: { type: "object", properties: {} },
 };
 
+const scheduleSolveEntry: CatalogEntry = {
+  id: "schedule-solve",
+  path: "/v1/schedule-solve",
+  method: "POST",
+  price_usd: 0.3,
+  description: "Solves a scheduling/roster problem",
+  input_schema: { type: "object", properties: {} },
+  output_schema: { type: "object", properties: {} },
+};
+
 function encode(payload: unknown): string {
   return Buffer.from(JSON.stringify(payload), "utf-8").toString("base64");
 }
@@ -304,6 +314,35 @@ describe("callPaidTool", () => {
     expect(result.isError).toBeFalsy();
     expect(result.content[0].text).toContain("not json");
     expect(result.content[0].text).toContain("Do not retry");
+  });
+
+  it("sends a POST with a JSON body (via fetchProduct's method arg) for a POST catalog entry, e.g. schedule-solve", async () => {
+    const fetchProduct = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ status: "optimal" }), { status: 200 }));
+    const deps: PaidToolDeps = {
+      fetchProduct,
+      createPaidFetch: vi.fn(),
+      decodeSettlement: vi.fn(),
+    };
+
+    const body = { slots: [{ id: "mon-9am" }], resources: [{ id: "alice" }], demands: [] };
+    const result = await callPaidTool(
+      scheduleSolveEntry,
+      body,
+      { baseUrl: "https://api.example.com", network: "eip155:8453", maxPriceUsd: 0.5 },
+      deps,
+    );
+
+    expect(fetchProduct).toHaveBeenCalledWith(
+      "https://api.example.com",
+      "/v1/schedule-solve",
+      body,
+      undefined,
+      "POST",
+    );
+    expect(result.isError).toBeFalsy();
+    expect(result.content[0].text).toContain("optimal");
   });
 
   it("never throws after a successful payment: returns raw_body when decodeSettlement itself throws", async () => {
