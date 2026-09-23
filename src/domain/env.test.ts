@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { parseEnv, parseMaxPriceUsd } from "./env.js";
 
 describe("parseMaxPriceUsd", () => {
-  it("defaults to 0.10 when unset", () => {
-    expect(parseMaxPriceUsd(undefined)).toBe(0.1);
+  it("defaults to 0.30 when unset", () => {
+    expect(parseMaxPriceUsd(undefined)).toBe(0.3);
   });
 
-  it("defaults to 0.10 for an empty string", () => {
-    expect(parseMaxPriceUsd("")).toBe(0.1);
-    expect(parseMaxPriceUsd("   ")).toBe(0.1);
+  it("defaults to 0.30 for an empty string", () => {
+    expect(parseMaxPriceUsd("")).toBe(0.3);
+    expect(parseMaxPriceUsd("   ")).toBe(0.3);
   });
 
   it("parses a valid positive number", () => {
@@ -30,7 +30,7 @@ describe("parseEnv", () => {
     const config = parseEnv({});
     expect(config.baseUrl).toBe("https://x402-api-24223879872.us-east1.run.app");
     expect(config.network).toBe("eip155:8453");
-    expect(config.maxPriceUsd).toBe(0.1);
+    expect(config.maxPriceUsd).toBe(0.3);
     expect(config.buyerPrivateKey).toBeUndefined();
   });
 

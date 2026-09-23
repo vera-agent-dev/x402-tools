@@ -1,6 +1,6 @@
 import { caip2ToChainId, DEFAULT_NETWORK } from "./network.js";
 
-const DEFAULT_MAX_PRICE_USD = 0.1;
+const DEFAULT_MAX_PRICE_USD = 0.3;
 const DEFAULT_BASE_URL = "https://x402-api-24223879872.us-east1.run.app";
 
 /** Parses X402_MAX_PRICE_USD, defaulting when unset/empty and failing clearly otherwise. */
